@@ -52,3 +52,4 @@ Tuyaopen Framework 包括：
 限量 500 个，先到先得，送完即止，赶紧扫码加群来领👇：
 
 ![qq_qrcode](../../docs/images/zh/qq_qrcode.png)
+test_remote
