@@ -27,3 +27,4 @@
 
 
 
+//tkl_pwm_copy.c从platform/t3/tuyaos/tuyaos_adapter/src/driver/tkl_pwm.c拷贝，因为修改了这个库文件。编译时替换路径的文件后删除

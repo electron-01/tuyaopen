@@ -30,6 +30,23 @@
 #define PROJECT_VERSION "1.0.0"
 #endif
 
+#include "tkl_gpio.h"
+#include "tkl_pwm.h"
+#include "c_source.h"
+extern const unsigned char dataa[];
+#include "tkl_uart.h"
+
+static void __gpio_irq_callback_sensor(void *args);
+static void __gpio_irq_callback(void *args);
+static void delay(void);
+uint8_t sensor_sw=0;
+TUYA_GPIO_LEVEL_E read_le;
+uint8_t pwm_temp = 0;
+uint8_t pwm_temp_state=0;
+uint8_t tkl_pwm_switch_temp=0;
+uint8_t swtich_temp=0;
+uint8_t speaker=0;
+
 /* for string to QRCode translate and print */
 extern void example_qrcode_string(const char *string, void (*fputs)(const char *str), int invert);
 
@@ -127,10 +144,31 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
             switch (dp->type) {
             case PROP_BOOL: {
                 PR_DEBUG("bool value:%d", dp->value.dp_bool);
+
+                    if (dp->value.dp_bool && dp->id == 20) {
+                        tkl_pwm_start(TUYA_PWM_NUM_0);
+                    } else if (dp->value.dp_bool==0 && dp->id == 20) {
+                        tkl_pwm_stop(TUYA_PWM_NUM_0);
+                    }
+                    
+                    if (dp->value.dp_bool && dp->id == 51) {
+                        sensor_sw= 1;
+                    }else if (dp->value.dp_bool==0 && dp->id == 51) {
+                        sensor_sw= 0;
+                    }
                 break;
             }
             case PROP_VALUE: {
                 PR_DEBUG("int value:%d", dp->value.dp_value);
+
+                    if (dp->value.dp_value && dp->id == 22) {
+                        if (pwm_temp != dp->value.dp_value)
+                        {
+                            pwm_temp = dp->value.dp_value;
+                            pwm_temp_state=1;
+                        }                        
+                    }
+
                 break;
             }
             case PROP_STR: {
@@ -196,6 +234,105 @@ bool user_network_check(void)
     return status == NETMGR_LINK_DOWN ? false : true;
 }
 
+
+
+//
+// typedef __UINT8_TYPE__ __uint8_t;
+// typedef __uint8_t uint8_t ;
+// // #define size_t long unsigned int
+// //typedef __SIZE_TYPE__ size_t;
+
+// typedef struct http_client_response {
+//     /**
+//      * @brief Buffer for both the raw HTTP header and body.
+//      *
+//      * This buffer is supplied by the application.
+//      */
+//     uint8_t *buffer;
+//     size_t buffer_length; /**< The length of the response buffer in bytes. */
+
+//     /**
+//      * @brief The starting location of the response headers in buffer.
+//      */
+//     const uint8_t *headers;
+//     size_t headers_length;
+
+//     /**
+//      * @brief The starting location of the response body in buffer.
+//      */
+//     const uint8_t *body;
+//     size_t body_length;
+
+//     /**
+//      * @brief The HTTP response Status-Code.
+//      */
+//     //uint16_t status_code;
+// } http_client_response_t;
+
+
+/**
+ * @brief interrupt callback function
+ *
+ * @param[in] args:parameters
+ * @return none
+ */
+static void __gpio_irq_callback(void *args)
+{
+    /* Both TAL_PR_ and PR_ have locks in these two types of printing and should not be used in interrupts. */
+    tkl_log_output("\r\n------ GPIO IRQ Callbcak ------------\r\n");
+    
+    // tkl_gpio_read(TUYA_GPIO_NUM_15,  &read_le);
+    // if (read_le== 1) {
+            //   tkl_pwm_stop(TUYA_PWM_NUM_0);
+    // }else {
+    //     //PR_DEBUG("GPIO read low level");
+    //      tkl_pwm_start(TUYA_PWM_NUM_0);
+    // }
+
+    swtich_temp++;
+    if (swtich_temp%2==0)
+    {
+        tkl_pwm_start(TUYA_PWM_NUM_0);
+    }else
+    {
+        tkl_pwm_stop(TUYA_PWM_NUM_0);
+    }
+    if(swtich_temp>=10)swtich_temp=0;
+    
+}
+static void __gpio_irq_callback_1(void *args)
+{
+//ai_interface
+speaker=1;
+
+}
+
+static void __gpio_irq_callback_sensor(void *args)
+{
+    // if (sensor_switch==1)
+    // {
+        // tkl_gpio_read(TUYA_GPIO_NUM_15,  &read_le);
+        // if (read_le) {
+        //         PR_DEBUG("GPIO read high level");
+        //         tkl_pwm_start(TUYA_PWM_NUM_0); 
+        // } else {
+        //     PR_DEBUG("GPIO read low level");
+        //     tkl_pwm_stop(TUYA_PWM_NUM_0); 
+        // }
+    // }    
+
+    if (sensor_sw==1) {
+        tkl_pwm_stop(TUYA_PWM_NUM_0);
+        }   
+}
+static void __gpio_irq_callback_sensor_1(void *args)
+{
+
+    if (sensor_sw==1){
+        tkl_pwm_start(TUYA_PWM_NUM_0);
+    }
+}
+
 void user_main()
 {
     int ret = OPRT_OK;
@@ -254,9 +391,123 @@ void user_main()
     /* Start tuya iot task */
     tuya_iot_start(&client);
 
+    http_client_response_t http_response = {0};
+    //uint8_t body_content = 1;
+    uint32_t body_buf[5] = {90,180,250,180,190};//char body_buf[8] = {0,1,1};
+    http_response.body = (uint8_t *)body_buf;
+    http_response.body_length = sizeof(body_buf);//sizeof
+
+    ////
+    TUYA_GPIO_IRQ_T cfg_IRQ_sensor ={
+    //.mode = TUYA_GPIO_IRQ_RISE_FALL,
+    .mode = TUYA_GPIO_IRQ_FALL,
+    .cb = __gpio_irq_callback_sensor,
+    .arg = NULL
+    };
+    tkl_gpio_irq_init(TUYA_GPIO_NUM_15,&cfg_IRQ_sensor);
+    tkl_gpio_irq_enable(TUYA_GPIO_NUM_15);
+    
+    TUYA_GPIO_IRQ_T cfg_IRQ_sensor_1 ={
+    //.mode = TUYA_GPIO_IRQ_RISE_FALL,
+    .mode = TUYA_GPIO_IRQ_RISE,
+    .cb = __gpio_irq_callback_sensor_1,
+    .arg = NULL
+    };
+    tkl_gpio_irq_init(TUYA_GPIO_NUM_14,&cfg_IRQ_sensor_1);
+    tkl_gpio_irq_enable(TUYA_GPIO_NUM_14);
+    ////
+
+
+
+    TUYA_GPIO_IRQ_T cfg_IRQ ={
+    .mode = TUYA_GPIO_IRQ_FALL,
+    .cb = __gpio_irq_callback,
+    .arg = NULL
+    };
+    tkl_gpio_irq_init(TUYA_GPIO_NUM_13,&cfg_IRQ);
+    tkl_gpio_irq_enable(TUYA_GPIO_NUM_13);
+
+    TUYA_GPIO_IRQ_T cfg_IRQ_1 ={
+    .mode = TUYA_GPIO_IRQ_FALL,
+    .cb = __gpio_irq_callback_1,
+    .arg = NULL
+    };
+    tkl_gpio_irq_init(TUYA_GPIO_NUM_17,&cfg_IRQ_1);
+    tkl_gpio_irq_enable(TUYA_GPIO_NUM_17);
+
+    TUYA_PWM_BASE_CFG_T pwm_cfg_2;
+    pwm_cfg_2.polarity = TUYA_PWM_POSITIVE; 
+    pwm_cfg_2.count_mode = TUYA_PWM_CNT_UP; 
+    pwm_cfg_2.duty = 27;
+    pwm_cfg_2.frequency = 16000;
+    tkl_pwm_init(TUYA_PWM_NUM_0, &pwm_cfg_2);
+    tkl_pwm_start(TUYA_PWM_NUM_0);
+
+    TUYA_PWM_BASE_CFG_T pwm_cfg;
+    pwm_cfg.polarity = TUYA_PWM_POSITIVE; 
+    pwm_cfg.count_mode = TUYA_PWM_CNT_UP; 
+    pwm_cfg.duty = 27;
+    pwm_cfg.frequency = 16000;
+    tkl_pwm_init(TUYA_PWM_NUM_2, &pwm_cfg);
+    tkl_pwm_start(TUYA_PWM_NUM_2);
+
+    // for (int i = 0; i < 5; i++) {
+    // tkl_pwm_start(TUYA_PWM_NUM_0);
+    // pwm_cfg.duty= body_buf[i];
+    // delay(); 
+    // }
+    //tkl_pwm_stop(TUYA_PWM_NUM_0);
+
+    TUYA_UART_BASE_CFG_T  cfg;
+    cfg.baudrate = 256000;
+    cfg.databits = TUYA_UART_DATA_LEN_8BIT;
+    cfg.stopbits = TUYA_UART_STOP_LEN_1BIT;
+    cfg.parity = TUYA_UART_PARITY_TYPE_NONE;
+    cfg.flowctrl = TUYA_UART_FLOWCTRL_NONE;
+    tkl_uart_init(TUYA_UART_NUM_2, &cfg);
+
+    //char *buff="FD FC FB FA 04 00 FF 00 01 00 04 03 02 01";
+    // char *buff[]={"FD","FC","FB","FA","04","00","FF","00","01","00","04","03","02","01"};
+    // tkl_uart_write(TUYA_UART_NUM_2, buff, strlen(buff));
+
+    //tkl_uart_read(TUYA_UART_NUM_2, void *buff, uint16_t len)
+
+
+    for (int i = 0; i < 57280; i++) {
+        // 将音频数据映射到PWM占空比
+        //pwm_cfg.duty=http_response.body[i];
+        pwm_cfg.duty= dataa[i];
+        tkl_pwm_init(TUYA_PWM_NUM_2, &pwm_cfg);
+    }
+
+
+
     for (;;) {
         /* Loop to receive packets, and handles client keepalive */
         tuya_iot_yield(&client);
+
+        if(pwm_temp_state==1){
+            pwm_temp_state=0;
+            pwm_cfg_2.duty = pwm_temp*2.7;
+            tkl_pwm_init(TUYA_PWM_NUM_0, &pwm_cfg_2);
+        }
+
+            // tkl_gpio_read(TUYA_GPIO_NUM_15,  &read_le);
+            // if (read_le== 1) {
+            //         tkl_pwm_start(TUYA_PWM_NUM_0);
+            // }else {
+            //     //PR_DEBUG("GPIO read low level");
+            //     tkl_pwm_stop(TUYA_PWM_NUM_0);
+            // }
+
+
+        if(speaker==1){
+            speaker=0;
+            for (int i = 0; i < 57280; i++) {
+                pwm_cfg.duty= dataa[i];
+                tkl_pwm_init(TUYA_PWM_NUM_2, &pwm_cfg);
+            }
+        }
     }
 }
 

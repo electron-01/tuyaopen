@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include <file_audio.h>
+extern unsigned char data_pcm_temp[]; 
+
 /**
  * @brief get token
  *
@@ -178,6 +181,38 @@ int tts_request_baidu(TTS_format_e format, char *text, int voice, char *lang, in
         rt = OPRT_LINK_CORE_HTTP_CLIENT_SEND_ERROR;
         goto err_exit;
     }
+
+
+
+   // 保存语音文件
+    // FILE *fp = fopen("/home/ubuntu/Desktop/tuyaopen/examples/ai/llm_demo/file_audio.pcm", "wb");
+    // if (fp) {
+    //     // if (http_response.body == NULL || http_response.body_length == 0) {
+    //     //     PR_DEBUG("数据为空或无效");
+    //     //     return;
+    //     // }else{fwrite(http_response.body, 1, http_response.body_length, fp);
+
+    //     PR_DEBUG("二进制数据（十六进制）:");
+    //     //PR_DEBUG("%02x ", http_response.body[i]); // 输出形如 "1a ff 00 3b"
+    //     // for (size_t i = 0; i < http_response.body_length; i++) {    
+    //     //     pwm_cfg.duty= http_response.body[i];tkl_pwm_init(TUYA_PWM_NUM_0, &pwm_cfg);       
+    //     // }
+    //     fwrite(http_response.body, 1, http_response.body_length, fp);
+
+    //     PR_DEBUG("http_response.body_length:%zu",http_response.body_length);  
+    //     fclose(fp);PR_DEBUG("Audio file saved successfully.");        
+    // } else PR_DEBUG("Failed to open file for writing.");
+ 
+ 
+        //PR_DEBUG("%02x ", http_response.body[i]); // 输出形如 "1a ff 00 3b"
+        for (size_t i = 0; i < http_response.body_length; i++) {    
+            data_pcm_temp[i] = http_response.body[i];
+            if (i==100)
+            {
+                PR_DEBUG("data_pcm_temp[i]:%c",http_response.body[i]); 
+            }             
+        }
+
 
     // response.body
     PR_DEBUG("response: %s", http_response.body);

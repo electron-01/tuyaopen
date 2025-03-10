@@ -31,4 +31,5 @@ target_sources(${EXAMPLE_LIB}
 target_include_directories(${EXAMPLE_LIB}
     PRIVATE
         ${APP_INC}
+        /home/ubuntu/Desktop/tuyaopen/examples/ai/llm_demo
     )

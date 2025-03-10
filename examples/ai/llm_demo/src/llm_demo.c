@@ -53,6 +53,10 @@
 #include "lwip_init.h"
 #endif
 
+//#include "tkl_i2s.h"////
+#include "tkl_gpio.h"
+#include "tkl_pwm.h"
+
 extern void tuya_app_cli_init(void);
 #define MAX_SIZE_OF_DEBUG_BUF 4096
 static char s_output_buf[MAX_SIZE_OF_DEBUG_BUF] = {0};
@@ -439,6 +443,33 @@ void user_main()
 #endif
     netmgr_init(type);
 
+
+
+
+    TUYA_PWM_BASE_CFG_T pwm_cfg_2;
+    pwm_cfg_2.polarity = TUYA_PWM_POSITIVE; 
+    pwm_cfg_2.count_mode = TUYA_PWM_CNT_UP; 
+    pwm_cfg_2.duty = 10000;
+    pwm_cfg_2.cycle = 10000;
+    pwm_cfg_2.frequency = 10000;
+    tkl_pwm_init(TUYA_PWM_NUM_0, &pwm_cfg_2,2);
+    // tkl_pwm_start(TUYA_PWM_NUM_0);
+
+    TUYA_PWM_BASE_CFG_T pwm_cfg;
+    pwm_cfg.polarity = TUYA_PWM_POSITIVE; 
+    pwm_cfg.count_mode = TUYA_PWM_CNT_UP; 
+    pwm_cfg.duty = 130;// 0-270
+    //pwm_cfg.cycle = 10000;//100; 
+    // 设置频率，假设为10000Hz
+    pwm_cfg.frequency = 16000;
+    tkl_pwm_init(TUYA_PWM_NUM_1, &pwm_cfg,1);
+    tkl_pwm_start(TUYA_PWM_NUM_0|TUYA_PWM_NUM_1);
+
+
+
+    LLM_set_model(MODEL_MOONSHOT_AI);
+
+    
     while (1) {
         tal_system_sleep(5000);
     }
