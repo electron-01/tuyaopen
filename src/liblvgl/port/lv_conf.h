@@ -77,6 +77,16 @@
     #endif
 #endif  /*LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN*/
 
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM==1)
+#define LV_MEM_CUSTOM_MALLOC    tkl_system_psram_malloc
+#define LV_MEM_CUSTOM_FREE      tkl_system_psram_free
+#define LV_MEM_CUSTOM_REALLOC   tkl_system_psram_realloc
+#else 
+#define LV_MEM_CUSTOM_MALLOC    tkl_system_malloc
+#define LV_MEM_CUSTOM_FREE      tkl_system_free
+#define LV_MEM_CUSTOM_REALLOC   tkl_system_realloc
+#endif
+
 /*====================
    HAL SETTINGS
  *====================*/
@@ -271,7 +281,7 @@
  *-----------*/
 
 /*Enable the log module*/
-#define LV_USE_LOG 0
+#define LV_USE_LOG 1
 #if LV_USE_LOG
 
     /*How important log should be added:
@@ -485,7 +495,7 @@
 #define LV_FONT_MONTSERRAT_18 0
 #define LV_FONT_MONTSERRAT_20 0
 #define LV_FONT_MONTSERRAT_22 0
-#define LV_FONT_MONTSERRAT_24 0
+#define LV_FONT_MONTSERRAT_24 1
 #define LV_FONT_MONTSERRAT_26 0
 #define LV_FONT_MONTSERRAT_28 0
 #define LV_FONT_MONTSERRAT_30 0
@@ -864,7 +874,7 @@
 
     /*1: Show CPU usage and FPS count
      * Requires `LV_USE_SYSMON = 1`*/
-    #define LV_USE_PERF_MONITOR 1
+    #define LV_USE_PERF_MONITOR 0
     #if LV_USE_PERF_MONITOR
         #define LV_USE_PERF_MONITOR_POS LV_ALIGN_BOTTOM_RIGHT
 
@@ -1083,7 +1093,7 @@
 #define LV_USE_DEMO_KEYPAD_AND_ENCODER 0
 
 /*Benchmark your system*/
-#define LV_USE_DEMO_BENCHMARK 0
+#define LV_USE_DEMO_BENCHMARK 1
 
 /*Render test for each primitives. Requires at least 480x272 display*/
 #define LV_USE_DEMO_RENDER 0

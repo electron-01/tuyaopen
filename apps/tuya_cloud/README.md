@@ -2,7 +2,7 @@
 
 English | [简体中文](README_zh.md)
 
-The Tuya Cloud Application is an application provided by the Tuya IoT platform, which allows developers to quickly implement features such as remote control and device management.
+The Tuya Cloud Application is an application provided by the Tuya AI+IoT platform, which allows developers to quickly implement features such as remote control and device management.
 
 `switch_demo` demonstrates a simple, cross-platform, cross-system switch example that supports multiple connections. Through the Tuya APP and Tuya Cloud Service, this switch can be remotely controlled.
 
@@ -20,8 +20,8 @@ The Tuyaopen Framework includes:
 All versions use TuyaOpen dedicated authorization codes. Using other authorization codes will not allow normal connection to the Tuya Cloud.
 
 ```shell
-[switch_demo.c:220] Replace the TUYA_DEVICE_UUID and TUYA_DEVICE_AUTHKEY contents, otherwise the demo cannot work
-[switch_demo.c:222] uuid uuidxxxxxxxxxxxxxxxx, authkey keyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[tuya_main.c:220] Replace the TUYA_DEVICE_UUID and TUYA_DEVICE_AUTHKEY contents, otherwise the demo cannot work
+[tuya_main.c:222] uuid uuidxxxxxxxxxxxxxxxx, authkey keyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 The dedicated authorization code for tuyaopen can be obtained through the following methods:
